@@ -1,0 +1,664 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>数据统计</title>
+
+<script type="text/javascript" src="js/jquery-1.8.0.min.js"></script>
+<style type="text/css">
+${
+demo.css
+};
+<
+style type ="text /css">.demo {
+	width: 760px;
+	margin: 20px auto 0 auto;
+	height: 70px;
+}
+
+.button {
+	display: inline-block;
+	outline: none;
+	cursor: pointer;
+	text-align: center;
+	text-decoration: none;
+	font: 28px/100% 'Microsoft yahei', Arial, Helvetica, sans-serif;
+	padding: .5em 2em .55em;
+	text-shadow: 0 1px 1px rgba(0, 0, 0, .3);
+	-webkit-border-radius: .5em;
+	-moz-border-radius: .5em;
+	border-radius: .5em;
+	-webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, .2);
+	-moz-box-shadow: 0 1px 2px rgba(0, 0, 0, .2);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, .2);
+}
+
+.button:hover {
+	text-decoration: none;
+}
+
+.button:active {
+	position: relative;
+	top: 1px;
+}
+
+.bigrounded {
+	-webkit-border-radius: 2em;
+	-moz-border-radius: 2em;
+	border-radius: 2em;
+}
+
+.medium {
+	font-size: 12px;
+	padding: .4em 1.5em .42em;
+}
+
+.small {
+	font-size: 11px;
+	padding: .2em 1em .275em;
+}
+
+/* blue */
+.blue {
+	color: #d9eef7;
+	border: solid 1px #0076a3;
+	background: #0095cd;
+	background: -webkit-gradient(linear, left top, left bottom, from(#00adee),
+		to(#0078a5));
+	background: -moz-linear-gradient(top, #00adee, #0078a5);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#00adee',
+		endColorstr='#0078a5');
+}
+
+.blue:hover {
+	background: #007ead;
+	background: -webkit-gradient(linear, left top, left bottom, from(#0095cc),
+		to(#00678e));
+	background: -moz-linear-gradient(top, #0095cc, #00678e);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#0095cc',
+		endColorstr='#00678e');
+}
+
+.blue:active {
+	color: #80bed6;
+	background: -webkit-gradient(linear, left top, left bottom, from(#0078a5),
+		to(#00adee));
+	background: -moz-linear-gradient(top, #0078a5, #00adee);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#0078a5',
+		endColorstr='#00adee');
+}
+</style>
+<script type="text/javascript">
+Date.prototype.Format = function(fmt) { //author: meizz 
+	var o = {
+		"M+" : this.getMonth() + 1, //月份 
+		"d+" : this.getDate()-1, //日 
+		"h+" : this.getHours(), //小时 
+		"m+" : this.getMinutes(), //分 
+		"s+" : this.getSeconds(), //秒 
+		"q+" : Math.floor((this.getMonth() + 3) / 3), //季度 
+		"S" : this.getMilliseconds()
+	//毫秒 
+	};
+	if (/(y+)/.test(fmt))
+		fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "")
+				.substr(4 - RegExp.$1.length));
+	for ( var k in o)
+		if (new RegExp("(" + k + ")").test(fmt))
+			fmt = fmt.replace(RegExp.$1,
+					(RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k])
+							.substr(("" + o[k]).length)));
+	return fmt;
+};
+  $(function() {
+	  	$("#selDateId").val(new Date().Format("yyyy-MM-dd"));	
+		getCountData('week');
+  });
+  function getCountData(str){
+	
+
+	
+		var dateArr = [];//时间轴
+		var moneyArr = [];//签约订单金额
+		var formArr=[];//转化率
+		var sendMoneyArr=[];//发包方金额
+		var agencyCount=[];//企业数量
+		var agencyPercentArr=[];//企业转化率
+		var agencySendPercent=[];//企业发包数量
+		var agencySendCount=[];//企业发包转化率
+		var regAgencyCount=[];
+		$.ajax({
+			type : "POST",
+			url : "servlet/GetCountDataServlet",
+			data : {
+				//beginDate : $("#selDateId").val()
+				beginDate :$("#selDateId").val(),
+				clickType :str
+				
+			},
+			dataType : 'json',
+			//contentType: "application/json;charset=UTF-8",        //传值方式
+			async : false,
+			success : function(msg) {
+				console.log(msg);
+				for (var i = 0; i < msg.length; i++) {
+					var oneData = msg[i];
+					//签约订单金额及转化率趋势图：
+					dateArr.push(oneData.DATE);
+					moneyArr.push(oneData.ORD_SIGNOPRICE);
+					var percent= oneData.PERCENT;
+					formArr.push(parseFloat(percent));
+					//企业发布发包订单
+					var timeAndMoney=[];
+					timeAndMoney.push(oneData.DATE);
+					timeAndMoney.push(parseInt(oneData.DEMA_CONPRICE));
+					sendMoneyArr.push(timeAndMoney);
+					
+					//企业数量和转化率
+					var agencyPercent= oneData.AGENCYPERCENT;
+					agencyPercentArr.push(parseFloat(agencyPercent));
+					agencyCount.push(parseInt(oneData.BU_SIGNONUM));
+					//企业发包数量及转化率
+					var agencysendpercent= oneData.AGENCYSENDPERCENT;
+					agencySendPercent.push(parseFloat(agencysendpercent));
+					agencySendCount.push(parseInt(oneData.BU_CONNUM));
+					//注册企业
+					var regTimeCount=[];
+					regTimeCount.push(oneData.DATE);
+					regTimeCount.push(parseInt(oneData.BU_REGNUM));
+					regAgencyCount.push(regTimeCount);
+					
+				}
+				
+			}
+		});
+		
+		//---签约订单金额及转化率趋势图  dateArr moneyArr
+		$('#container2').highcharts(
+						{
+							chart : {
+								zoomType : 'xy'
+							},
+							title : {
+								text : '<font  style="font-size: 24px" face="微软雅黑">签约订单金额及转化率走势</font>'
+							},
+							subtitle : {
+								//text : 'Source: WorldClimate.com'
+							},
+							xAxis : [ {
+								categories : dateArr,
+								labels: { 
+	                             rotation: 0, 
+	                             style: { 
+	                                 fontSize: '18px', 
+	                                 fontFamily: 'Verdana, sans-serif'
+	                                 //writingMode:'tb-rl'    //文字竖排样式
+                            }
+							} }],
+							yAxis : [ { // Primary yAxis 
+								labels : {
+									format : '{value}%',
+									style : {
+										color : '#89A54E'
+									}
+								},
+								title : {
+									text : '转化率1',
+									style : {
+										color : '#89A54E'
+									}
+								}
+							}, { // Secondary yAxis
+								title : {
+									text : '签约订单金额',
+									style : {
+										color : '#4572A7'
+									}
+								},
+								labels : {
+									format : '{value} 元',
+									style : {
+										color : '#4572A7'
+									}
+								},
+								opposite : true
+							} ],
+							tooltip : {
+								shared : true
+							},
+							legend : {
+								/* layout : 'vertical',
+								align : 'left',
+								x : 120,
+								verticalAlign : 'top',
+								y : 100,
+								floating : true,
+								backgroundColor : '#FFFFFF' */
+							},
+							series : [
+									{
+										name : '签约订单金额',
+										color : '#4572A7',
+										type : 'column',
+										yAxis : 1,
+										data : moneyArr,
+										dataLabels : {
+											enabled : true,
+											rotation : 360,
+											color : 'black',
+											align : 'center',
+											  formatter: function() { 
+                                              return( this.y.toString().replace(/\B(?=(?:\d{3})+\b)/g, ',') );
+                                              },
+											//format : '{point.y:.1f}',
+											// one decimal
+											y : -2,
+											// 10 pixels down from the top
+											style : {
+												fontSize : '20px',
+												fontFamily : 'Verdana, sans-serif'
+											}
+										},
+										tooltip : {
+											valueSuffix : '元'
+										}
+									},
+									{
+										name : '转化率',
+										color : '#89A54E',
+										type : 'spline',
+										data : formArr,
+										dataLabels : {
+											enabled : true,
+											rotation : 360,
+											color : 'red',
+											align : 'center',
+											format : '{point.y:.1f}',
+											// one decimal
+											y : -2,
+											// 10 pixels down from the top
+											style : {
+												fontSize : '20px',
+												fontFamily : 'Verdana, sans-serif'
+											}
+										},
+										tooltip : {
+											valueSuffix : '%'
+										}
+									} ]
+		});
+		//发包方金额走势图  sendMoneyArr
+		 $('#container').highcharts({
+		        chart: {
+		            type: 'column'
+		        },
+		        title: {
+		          text : '<font  style="font-size: 24px" face="微软雅黑">发包订单金额走势</font>'
+		        },
+		        subtitle: {
+		            //text: 'Source: <a href="http://en.wikipedia.org/wiki/List_of_cities_proper_by_population">Wikipedia</a>'
+		        },
+		        xAxis: {
+		            type: 'category',
+		            labels: {
+		                rotation: 0,
+		                style: {
+		                    fontSize: '18px',
+		                    fontFamily: 'Verdana, sans-serif'
+		                }
+		            }
+		        },
+		        yAxis: {
+		            min: 0,
+		            title: {
+		                text: '发包方金额 (元)'
+		            }
+		        },
+		        legend: {
+		            enabled: false	
+		        },
+		        tooltip: {
+		            pointFormat: '发包方金额: <b>{point.y:.0f} 元</b>'
+		        },
+		        series: [{
+		            name: 'Population',
+		            data:sendMoneyArr,
+		            dataLabels: {
+		                enabled: true,
+		                rotation: 360,
+		                color: 'black',
+		                align: 'center',
+		               // format: '{point.y:.0f}', // one decimal
+		                 formatter: function() {
+		                    return( this.y.toString().replace(/\B(?=(?:\d{3})+\b)/g, ',') );
+                              },
+		                y: -2, // 10 pixels down from the top
+		                style: {
+		                    fontSize: '20px',
+		                    fontFamily: 'Verdana, sans-serif'
+		                }
+		            }
+		        }]
+		    });
+		
+			//---签约企业数量及转化率趋势图agencyPercent  agencyCount
+			if(agencyPercentArr!=null&&agencyCount!=null){
+				$('#container3').highcharts(
+						{
+							chart : {
+								zoomType : 'xy'
+							},
+							title : {
+								text : '<font  style="font-size: 24px" face="微软雅黑">签约企业数量及转化率走势</font>'
+							},
+							subtitle : {
+								//text : 'Source: WorldClimate.com'
+							},
+							xAxis : [ {
+								categories : dateArr,
+								labels: { 
+	                             rotation: 0, 
+	                             style: { 
+	                                 fontSize: '18px', 
+	                                 fontFamily: 'Verdana, sans-serif'
+	                                 //writingMode:'tb-rl'    //文字竖排样式
+                            }
+							} 
+							} ],
+							yAxis : [ { // Primary yAxis 
+								labels : {
+									format : '{value}%',
+									style : {
+										color : '#89A54E'
+									}
+								},
+								title : {
+									text : '转化率',
+									style : {
+										color : '#89A54E'
+									}
+								}
+							}, { // Secondary yAxis
+								title : {
+									text : '签约企业数量',
+									style : {
+										color : '#4572A7'
+									}
+								},
+								labels : {
+									format : '{value} 个',
+									style : {
+										color : '#4572A7'
+									}
+								},
+								opposite : true
+							} ],
+							tooltip : {
+								shared : true
+							},
+							legend : {
+								/* layout : 'vertical',
+								align : 'left',
+								x : 120,
+								verticalAlign : 'top',
+								y : 100,
+								floating : true,
+								backgroundColor : '#FFFFFF' */
+							},
+							series : [
+									{
+										name : '签约企业数量',
+										color : '#4572A7',
+										type : 'column',
+										yAxis : 1,
+										data : agencyCount,
+										dataLabels : {
+											enabled : true,
+											rotation : 360,
+											color : 'black',
+											align : 'center',
+											//format : '{point.y:.1f}',
+											// one decimal
+											y : -2,
+											// 10 pixels down from the top
+											style : {
+												fontSize : '20px',
+												fontFamily : 'Verdana, sans-serif'
+											}
+										},
+										tooltip : {
+											valueSuffix : '个'
+										}
+									},
+									{
+										name : '转化率',
+										color : '#89A54E',
+										type : 'spline',
+										data : agencyPercentArr,
+										dataLabels : {
+											enabled : true,
+											rotation : 360,
+											color : 'red',
+											align : 'center',
+											format : '{point.y:.1f}',
+											// one decimal
+											y : -2,
+											// 10 pixels down from the top
+											style : {
+												fontSize : '20px',
+												fontFamily : 'Verdana, sans-serif'
+											}
+										},
+										tooltip : {
+											valueSuffix : '%'
+										}
+									} ]
+		           });
+				
+			}
+			
+			
+			if(agencySendPercent!=null&&agencySendCount!=null){
+				//---发包企业数量及转化率趋势图     agencySendCount
+				$('#container4').highcharts(
+								{
+									chart : {
+										zoomType : 'xy'
+									},
+									title : {
+									text : '<font  style="font-size: 24px" face="微软雅黑">发包企业数量及转化率走势</font>'
+									},
+									subtitle : {
+										//text : 'Source: WorldClimate.com'
+									},
+									xAxis : [ {
+										categories : dateArr,
+										labels: { 
+	                             rotation: 0, 
+	                             style: { 
+	                                 fontSize: '18px', 
+	                                 fontFamily: 'Verdana, sans-serif'
+	                                 //writingMode:'tb-rl'    //文字竖排样式
+                            }
+							} 
+									} ],
+									yAxis : [ { // Primary yAxis 
+										labels : {
+											format : '{value}%',
+											style : {
+												color : '#89A54E'
+											}
+										},
+										title : {
+											text : '转化率',
+											style : {
+												color : '#89A54E'
+											}
+										}
+									}, { // Secondary yAxis
+										title : {
+											text : '企业发包数量',
+											style : {
+												color : '#4572A7'
+											}
+										},
+										labels : {
+											format : '{value} 个',
+											style : {
+												color : '#4572A7'
+											}
+										},
+										opposite : true
+									} ],
+									tooltip : {
+										shared : true
+									},
+									legend : {
+										/* layout : 'vertical',
+										align : 'left',
+										x : 120,
+										verticalAlign : 'top',
+										y : 100,
+										floating : true,
+										backgroundColor : '#FFFFFF' */
+									},
+									series : [
+											{
+												name : '企业发包数量',
+												color : '#4572A7',
+												type : 'column',
+												yAxis : 1,
+												data : agencySendCount,
+												dataLabels : {
+													enabled : true,
+													rotation : 360,
+													color : 'black',
+													align : 'center',
+													//format : '{point.y:.1f}',
+													// one decimal
+													y : -2,
+													// 10 pixels down from the top
+													style : {
+														fontSize : '20px',
+														fontFamily : 'Verdana, sans-serif'
+													}
+												},
+												tooltip : {
+													valueSuffix : '元'
+												}
+											},
+											{
+												name : '转化率',
+												color : '#89A54E',
+												type : 'spline',
+												data : agencySendPercent,
+												dataLabels : {
+													enabled : true,
+													rotation : 360,
+													color : 'red',
+													align : 'center',
+													format : '{point.y:.1f}',
+													// one decimal
+													y : -2,
+													// 10 pixels down from the top
+													style : {
+														fontSize : '20px',
+														fontFamily : 'Verdana, sans-serif'
+													}
+												},
+												tooltip : {
+													valueSuffix : '%'
+												}
+											} ]
+				});
+				
+				
+				
+			}
+			
+			
+			if(regAgencyCount!=null){
+				//企业注册走势图 regAgencyCount
+				 $('#container5').highcharts({
+				        chart: {
+				            type: 'column'
+				        },
+				        title: {
+				            text : '<font  style="font-size: 24px" face="微软雅黑">注册企业走势</font>'
+				        },
+				        subtitle: {
+				            //text: 'Source: <a href="http://en.wikipedia.org/wiki/List_of_cities_proper_by_population">Wikipedia</a>'
+				        },
+				        xAxis: {
+				            type: 'category',
+				            labels: {
+				                rotation: 0,
+				                style: {
+				                    fontSize: '18px',
+				                    fontFamily: 'Verdana, sans-serif'
+				                }
+				            }
+				        },
+				        yAxis: {
+				            min: 0,
+				            title: {
+				                text: '注册企业数 (家)'
+				            }
+				        },
+				        legend: {
+				            enabled: false
+				        },
+				        tooltip: {
+				            pointFormat: '注册企业数: <b>{point.y:.0f} 家</b>'
+				        },
+				        series: [{
+				            name: 'Population',
+				            data:regAgencyCount,
+				            dataLabels: {
+				                enabled: true,
+				                rotation: 360,
+				                color: 'black',
+				                align: 'center',
+				                format: '{point.y:.0f}', // one decimal
+				                y: -2, // 10 pixels down from the top
+				                style: {
+				                    fontSize: '20px',
+				                    fontFamily: 'Verdana, sans-serif'
+				                }
+				            }
+				        }]
+				    });
+				
+				
+				
+			}
+			
+  }
+	
+</script>
+</head>
+<body>
+	<script src="js/highcharts.js"></script>
+	<script src="js/exporting.js"></script>
+
+	<div style="padding-left: 200px" >
+		<input type="date"  id="selDateId"  style="width: 270px;height: 50px;font-size: 28px" min="2016-01-01"  />
+		<a href="#" class="button blue "  onclick="getCountData('week')">周统计</a>
+	    <a href="#" class="button blue"  onclick="getCountData('day')">天统计</a>
+	</div>
+	<br><br>
+
+	<div style="width: 220px;height: 50px;background-color: #D3D3D3;text-align: center;font-size: 45px">订单签约</div>
+	<div id="container2"
+		style="min-width: 300px; height: 400px; margin: 0 auto"></div>
+	<div id="container"
+		style="min-width: 300px; height: 400px; margin: 0 auto"></div><br><br>
+   <div style="width: 220px;height: 50px;background-color: #D3D3D3;text-align: center;font-size: 45px">企业发展</div>
+   <div id="container3"
+		style="min-width: 300px; height: 400px; margin: 0 auto"></div>
+	<div id="container4"
+		style="min-width: 300px; height: 400px; margin: 0 auto"></div>
+	<div id="container5"
+		style="min-width: 300px; height: 400px; margin: 0 auto"></div>
+</body>
+</html>
